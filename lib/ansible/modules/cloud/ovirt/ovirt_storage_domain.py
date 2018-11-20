@@ -605,8 +605,8 @@ def control_state(sd_module):
 def main():
     argument_spec = ovirt_full_argument_spec(
         state=dict(
-            choices=['present', 'absent', 'maintenance', 'unattached', 'imported', 'update_ovf_store'],
-            default='present',
+            choices=['present', 'absent', 'maintenance', 'unattached', 'imported', 'update_ovf_store', 'active'],
+            default='active',
         ),
         id=dict(default=None),
         name=dict(default=None),
@@ -632,6 +632,9 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
+        required_if=[
+            [ "state", "active", [ "data_center"] ],
+        ]
     )
 
     check_sdk(module)
@@ -664,7 +667,10 @@ def main():
                 format=module.params['format'],
                 host=host_param,
             )
-        elif state == 'present' or state == 'imported':
+        elif state == 'present':
+            ret = storage_domains_module.create()
+            ret['changed'] = storage_domains_module.changed
+        elif state == 'active' or state == 'imported':
             sd_id = storage_domains_module.create()['id']
             storage_domains_module.post_create_check(sd_id)
             ret = storage_domains_module.action(
