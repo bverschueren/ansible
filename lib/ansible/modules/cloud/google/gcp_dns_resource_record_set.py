@@ -359,18 +359,14 @@ class SOAForwardable(object):
 
 def prefetch_soa_resource(module):
     name = module.params['name'].split('.')[1:]
+    module_params_copy = module.params.copy()
+    module_params_copy.update({
+        'type': 'SOA',
+        'name': '.'.join(name),
+        })
 
     resource = SOAForwardable(
-        {
-            'type': 'SOA',
-            'managed_zone': module.params['managed_zone'],
-            'name': '.'.join(name),
-            'project': module.params['project'],
-            'scopes': module.params['scopes'],
-            'service_account_file': module.params['service_account_file'],
-            'auth_kind': module.params['auth_kind'],
-            'service_account_email': module.params['service_account_email'],
-        },
+        module_params_copy,
         module,
     )
 

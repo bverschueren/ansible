@@ -18,6 +18,9 @@ options:
     service_account_file:
         description:
             - The path of a Service Account JSON file if serviceaccount is selected as type.
+    service_account_info:
+        description:
+            - The content of a Service Account JSON file if serviceaccount is selected as type.
     service_account_email:
         description:
             - An optional service account email address if machineaccount is selected
@@ -30,6 +33,8 @@ notes:
     C(GCP_SERVICE_ACCOUNT_FILE) env variable.
   - For authentication, you can set service_account_email using the
     C(GCP_SERVICE_ACCOUNT_EMAIL) env variable.
+  - For authentication, you can set service_account_info in an associative array using the
+    C(GCP_SERVICE_ACCOUNT_INFO) env variable.
   - For authentication, you can set auth_kind using the C(GCP_AUTH_KIND) env
     variable.
   - For authentication, you can set scopes using the C(GCP_SCOPES) env variable.

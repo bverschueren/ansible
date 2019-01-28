@@ -154,8 +154,15 @@ class GcpSession(object):
             credentials, project_id = google.auth.default(scopes=self.module.params['scopes'])
             return credentials
         elif cred_type == 'serviceaccount':
-            path = os.path.realpath(os.path.expanduser(self.module.params['service_account_file']))
-            return service_account.Credentials.from_service_account_file(path).with_scopes(self.module.params['scopes'])
+            if self.module.params['service_account_file']:
+                path = os.path.realpath(os.path.expanduser(self.module.params['service_account_file']))
+                return service_account.Credentials.from_service_account_file(path).with_scopes(self.module.params['scopes'])
+            elif self.module.params['service_account_info']:
+                return service_account.Credentials.from_service_account_info(
+                    self.module.params['service_account_info']
+                ).with_scopes(self.module.params['scopes'])
+            else:
+                self.module.fail_json("Either one of 'service_account_file' or 'service_account_info' is required if 'cred_type' is 'service_account'")
         elif cred_type == 'machineaccount':
             return google.auth.compute_engine.Credentials(
                 self.module.params['service_account_email'])
@@ -199,6 +206,10 @@ class GcpModule(AnsibleModule):
                     required=False,
                     fallback=(env_fallback, ['GCP_SERVICE_ACCOUNT_FILE']),
                     type='path'),
+                service_account_info=dict(
+                    required=False,
+                    fallback=(env_fallback, ['GCP_SERVICE_ACCOUNT_INFO']),
+                    type='dict'),
                 scopes=dict(
                     required=False,
                     fallback=(env_fallback, ['GCP_SCOPES']),
@@ -211,7 +222,7 @@ class GcpModule(AnsibleModule):
             mutual = kwargs['mutually_exclusive']
 
         kwargs['mutually_exclusive'] = mutual.append(
-            ['service_account_email', 'service_account_file']
+            ['service_account_email', 'service_account_file', 'service_account_info']
         )
 
         AnsibleModule.__init__(self, *args, **kwargs)
