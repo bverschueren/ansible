@@ -117,6 +117,24 @@ EXAMPLES = '''
       auth_kind: "serviceaccount"
       service_account_file: "/tmp/auth.pem"
       state: present
+
+- name: get credentials from local service account file
+  set_fact:
+      service_account_info: "{{ lookup('file', 'project_credentials.json')|from_json }}"
+
+- name: create a resource record set
+  gcp_dns_resource_record_set:
+      name: www.testzone-4.com.
+      managed_zone: "my-zone"
+      type: A
+      ttl: 600
+      target:
+        - 10.1.2.3
+        - 40.5.6.7
+      project: "test_project"
+      auth_kind: "serviceaccount"
+      service_account_info: "{{ service_account_info }}"
+      state: present
 '''
 
 RETURN = '''
