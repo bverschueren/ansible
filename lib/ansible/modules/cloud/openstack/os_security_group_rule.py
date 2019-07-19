@@ -30,7 +30,10 @@ options:
    protocol:
       description:
         - IP protocols TCP UDP ICMP 112 (VRRP)
-      choices: ['tcp', 'udp', 'icmp', '112', None]
+      choices: ['None', 'ah', 'dccp', 'egp', 'esp', 'gre', 'icmp', 'igmp',
+                    'ipv6-encap', 'ipv6-frag', 'ipv6-icmp', 'ipv6-nonxt',
+                    'ipv6-opts', 'ipv6-route', 'ospf', 'pgm', 'rsvp', 'sctp', 'tcp',
+                    'udp', 'udplite', 'vrrp', '112']
    port_range_min:
       description:
         - Starting port
@@ -176,6 +179,12 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
+PROTOCOL_NAMED_CHOICES = ['None', 'ah', 'dccp', 'egp', 'esp', 'gre', 'icmp', 'igmp',
+                     'ipv6-encap', 'ipv6-frag', 'ipv6-icmp', 'ipv6-nonxt',
+                     'ipv6-opts', 'ipv6-route', 'ospf', 'pgm', 'rsvp', 'sctp', 'tcp',
+                     'udp', 'udplite', 'vrrp']
+PROTOCOL_NUMERIC_CHOICES = [str(i) for i in list(range(0, 255))]
+
 def _ports_match(protocol, module_min, module_max, rule_min, rule_max):
     """
     Capture the complex port matching logic.
@@ -196,7 +205,7 @@ def _ports_match(protocol, module_min, module_max, rule_min, rule_max):
     """
 
     # Check if the user is supplying -1 for ICMP.
-    if protocol == 'icmp':
+    if protocol in ['icmp', 'esp', 'gre']:
         if module_min and int(module_min) == -1:
             module_min = None
         if module_max and int(module_max) == -1:
@@ -273,7 +282,7 @@ def main():
         # NOTE(Shrews): None is an acceptable protocol value for
         # Neutron, but Nova will balk at this.
         protocol=dict(default=None,
-                      choices=[None, 'tcp', 'udp', 'icmp', '112']),
+                      choices=(PROTOCOL_NAMED_CHOICES + PROTOCOL_NUMERIC_CHOICES)),
         port_range_min=dict(required=False, type='int'),
         port_range_max=dict(required=False, type='int'),
         remote_ip_prefix=dict(required=False, default=None),
@@ -339,6 +348,7 @@ def main():
                 kwargs = {}
                 if project_id:
                     kwargs['project_id'] = project_id
+
                 rule = cloud.create_security_group_rule(
                     secgroup['id'],
                     port_range_min=module.params['port_range_min'],
